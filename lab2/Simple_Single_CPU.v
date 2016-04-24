@@ -68,7 +68,12 @@ wire [32-1:0] Shift2result;
 wire [32-1:0] pc_in;
 
 wire mux_pc_select;
-assign mux_pc_select = Branch & ALUzero;
+assign mux_pc_select = Branch & ALUzeroresult;
+
+wire inverse_ALUzero;
+assign inverse_ALUzero = ~ALUzero;
+
+wire ALUzeroselect;
 
 
 
@@ -115,13 +120,15 @@ Reg_File RF(
 	
 Decoder Decoder(
         .instr_op_i(instr[31:26]), 
+        .funct_i(instr[5:0]),
 	    .RegWrite_o(RegWrite), 
 	    .ALU_op_o(ALU_op),   
 	    .ALUSrc1_o(ALUSrc1select),   
 	    .ALUSrc2_o(ALUSrc2select),   
 	    .RegDst_o(RegDst),   
 		.Branch_o(Branch),
-        .SE_o(SEselect)
+        .SE_o(SEselect),
+        .ALUZero_o(ALUzeroselect)
 	    );
 
 ALU_Ctrl AC(
@@ -189,7 +196,13 @@ MUX_2to1 #(.size(32)) Mux_PC_Source(
         .data_o(pc_in)
         );	
 
+MUX_2to1 #(.size(1)) Mux_ALU_ZERO(
+        .data0_i(ALUzero),
+        .data1_i(inverse_ALUzero),
+        .select_i(ALUzeroselect),
+        .data_o(ALUzeroresult)
+        );	
+
 endmodule
 		  
-
 

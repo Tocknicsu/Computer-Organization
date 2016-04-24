@@ -40,6 +40,9 @@ always @(*) begin
         9'b010100010: ALUCtrl_o = 4'b0110;  //SUB
         9'b001??????: ALUCtrl_o = 4'b1001;  //ORI
         9'b100??????: ALUCtrl_o = 4'b1110;  //LUI
+        9'b010000011: ALUCtrl_o = 4'b1101;  //SRA
+        9'b010000111: ALUCtrl_o = 4'b1010;  //SRAV
+        9'b000101010: ALUCtrl_o = 4'b0110;  //BNE
     endcase
 end
 

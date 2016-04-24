@@ -41,11 +41,13 @@ always @(*) begin
         6: result_o <= src1_i - src2_i;
         7: result_o <= src1_i < src2_i ? 1 : 0;
         9: result_o <= src1_i | (src2_i & 32'b00000000000000001111111111111111);
+        10: result_o <= (src1_i) >>> (src2_i);
         12: result_o <= ~(src1_i | src2_i);
+        13: result_o <= (src1_i) >>> (src2_i & 32'b00000000000000000000000000011111);
         14: result_o <= src2_i << 16;
         15: result_o <= src1_i < (src2_i & 32'b00000000000000001111111111111111) ? 1 : 0;
         default: result_o <= 0;
-	endcase
+    endcase
 end
 
 endmodule
