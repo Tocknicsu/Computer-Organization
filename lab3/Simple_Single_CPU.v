@@ -16,7 +16,6 @@ wire ALUSrc1select;
 wire ALUSrc2select;
 wire MemRead;
 wire MemWrite;
-wire [32-1:0] Mem_data_out;
 wire ExtensionSelect;
 wire ImmExtensionSelect;
 
@@ -64,6 +63,11 @@ assign inverse_ALUzero = ~ALUzero;
 wire ALUzeroselect;
 
 
+wire [32-1:0] RDdata;
+wire [32-1:0] MemResult;
+wire RDWriteBackSelect;
+wire [32-1:0] RDWriteBackResult;
+
 //Greate componentes
 ProgramCounter PC(
         .clk_i(clk_i),      
@@ -89,6 +93,13 @@ MUX_2to1 #(.size(5)) Mux_Write_Reg(
         .select_i(RegDst),
         .data_o(RDaddr)
         );	
+
+MUX_2to1 #(.size(32)) Mux_Write_Data(
+        .data0_i(ALUresult),
+        .data1_i(MemResult),
+        .select_i(RDWriteBackSelect),
+        .data_o(RDWriteBackResult)
+        );
 		
 Reg_File RF(
         .clk_i(clk_i),      
@@ -96,7 +107,7 @@ Reg_File RF(
         .RSaddr_i(instr[25:21]),  
         .RTaddr_i(instr[20:16]),  
         .RDaddr_i(RDaddr),  
-        .RDdata_i(ALUresult), 
+        .RDdata_i(RDWriteBackResult), 
         .RegWrite_i(RegWrite),
         .RSdata_o(RSdata),  
         .RTdata_o(RTdata)   
@@ -114,7 +125,10 @@ Decoder Decoder(
         .Jump_o(mux_pc_jump_select),
         .ImmExtensionSelect_o(ImmExtensionSelect),
         .ExtensionSelect_o(ExtensionSelect),
-        .ALUZeroSelect_o(ALUzeroselect)
+        .ALUZeroSelect_o(ALUzeroselect),
+        .MemRead_o(MemRead),
+        .MemWrite_o(MemWrite),
+        .RDWriteBackSelect_o(RDWriteBackSelect)
 	    );
 
 ALU_Ctrl AC(
@@ -222,6 +236,6 @@ Data_Memory Data_Memory(
         .data_i(RTdata),
         .MemRead_i(MemRead),
         .MemWrite_i(MemWrite),
-        .data_o(Mem_data_out)
+        .data_o(MemResult)
 );
 endmodule
