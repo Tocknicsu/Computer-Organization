@@ -9,8 +9,10 @@ wire [32-1:0] pc_addr;
 wire [32-1:0] instr;
 wire RegWrite;
 wire RegDst;
+wire [5-1:0] RegDstResult;
 wire [3-1:0] ALU_op;
 reg [32-1:0] const_32d4 = 4;
+reg [5-1:0] const_5d31 = 31;
 wire [5-1:0] RDaddr;
 wire ALUSrc1select;
 wire ALUSrc2select;
@@ -19,12 +21,18 @@ wire MemWrite;
 wire ExtensionSelect;
 wire ImmExtensionSelect;
 
+//assign RDaddr = RegDstResult;
+
 
 wire [32-1:0] ShamtUnsignExtensionResult;
 wire [32-1:0] ImmSignExtensionResult;
 wire [32-1:0] ImmUnsignExtensionResult;
 wire [32-1:0] ImmExtensionResult;
 wire [32-1:0] ExtensionResult;
+
+
+wire jal;
+wire jr;
 
 wire [32-1:0] RSdata;
 
@@ -42,7 +50,11 @@ wire [32-1:0] ALUresult;
 
 wire Branch;
 wire mux_pc_branch_select;
-assign mux_pc_branch_select = Branch & ALUzeroresult;
+//assign mux_pc_branch_select = Branch & ((ALUzeroresult & ALUBranchZeroSelect ) | (ALUresult & ALUBranchResultSelect));
+assign mux_pc_branch_select = Branch & (ALUBranchResultSelect ? ALUresult : ALUzeroresult);
+
+
+
 wire [32-1:0] BranchShifterResult;
 wire [32-1:0] BranchResult;
 wire mux_pc_jump_select;
@@ -50,17 +62,19 @@ wire [32-1:0] JumpShifterResult;
 wire [32-1:0] JumpResult;
 assign JumpResult = {pc_addr[31:28], JumpShifterResult[27:0]};
 
-wire [32-1:0] Adder1result;
+wire [32-1:0] PC_PLUS4;
 
 wire [32-1:0] Adder2result;
 
 
 wire [32-1:0] pc_in;
+wire [32-1:0] PCJumpResult;
 
 wire inverse_ALUzero;
 assign inverse_ALUzero = ~ALUzero;
 
-wire ALUzeroselect;
+wire ALUBranchZeroSelect;
+wire ALUBranchResultSelect;
 
 
 wire [32-1:0] RDdata;
@@ -79,7 +93,7 @@ ProgramCounter PC(
 Adder Adder1(
         .src1_i(const_32d4),     
 	    .src2_i(pc_addr),     
-	    .sum_o(Adder1result)    
+	    .sum_o(PC_PLUS4)    
 	    );
 	
 Instr_Memory IM(
@@ -87,19 +101,34 @@ Instr_Memory IM(
 	    .instr_o(instr)    
 	    );
 
-MUX_2to1 #(.size(5)) Mux_Write_Reg(
+MUX_2to1 #(.size(5)) Mux_Write_DST_Reg(
         .data0_i(instr[20:16]),
         .data1_i(instr[15:11]),
         .select_i(RegDst),
-        .data_o(RDaddr)
+        .data_o(RegDstResult)
         );	
 
-MUX_2to1 #(.size(32)) Mux_Write_Data(
+MUX_2to1 #(.size(5)) Mux_Write_Reg(
+        .data0_i(RegDstResult),
+        .data1_i(const_5d31),
+        .select_i(jal),
+        .data_o(RDaddr)
+        );
+
+MUX_2to1 #(.size(32)) Mux_Write_Back_Data(
         .data0_i(ALUresult),
         .data1_i(MemResult),
         .select_i(RDWriteBackSelect),
         .data_o(RDWriteBackResult)
         );
+
+MUX_2to1 #(.size(32)) Mux_Write_Data(
+        .data0_i(RDWriteBackResult),
+        .data1_i(PC_PLUS4),
+        .select_i(jal),
+        .data_o(RDdata)
+        );
+
 		
 Reg_File RF(
         .clk_i(clk_i),      
@@ -107,7 +136,7 @@ Reg_File RF(
         .RSaddr_i(instr[25:21]),  
         .RTaddr_i(instr[20:16]),  
         .RDaddr_i(RDaddr),  
-        .RDdata_i(RDWriteBackResult), 
+        .RDdata_i(RDdata), 
         .RegWrite_i(RegWrite),
         .RSdata_o(RSdata),  
         .RTdata_o(RTdata)   
@@ -125,10 +154,13 @@ Decoder Decoder(
         .Jump_o(mux_pc_jump_select),
         .ImmExtensionSelect_o(ImmExtensionSelect),
         .ExtensionSelect_o(ExtensionSelect),
-        .ALUZeroSelect_o(ALUzeroselect),
+        .ALUBranchZeroSelect_o(ALUBranchZeroSelect),
+        .ALUBranchResultSelect_o(ALUBranchResultSelect),
         .MemRead_o(MemRead),
         .MemWrite_o(MemWrite),
-        .RDWriteBackSelect_o(RDWriteBackSelect)
+        .RDWriteBackSelect_o(RDWriteBackSelect),
+        .jal_o(jal),
+        .jr_o(jr)
 	    );
 
 ALU_Ctrl AC(
@@ -193,7 +225,7 @@ ALU ALU(
 	    );
 		
 Adder Adder2(
-        .src1_i(Adder1result), 
+        .src1_i(PC_PLUS4), 
 	    .src2_i(BranchShifterResult), 
 	    .sum_o(Adder2result)      
 	    );
@@ -209,7 +241,7 @@ Shift_Left_Two_32 Jump_Shifter(
         );
 		
 MUX_2to1 #(.size(32)) Mux_PC_Branch_Source(
-        .data0_i(Adder1result),
+        .data0_i(PC_PLUS4),
         .data1_i(Adder2result),
         .select_i(mux_pc_branch_select),
         .data_o(BranchResult)
@@ -219,13 +251,20 @@ MUX_2to1 #(.size(32)) Mux_PC_Jump_Source(
         .data0_i(BranchResult),
         .data1_i(JumpResult),
         .select_i(mux_pc_jump_select),
+        .data_o(PCJumpResult)
+        );	
+
+MUX_2to1 #(.size(32)) Mux_PC_Jr_Source(
+        .data0_i(PCJumpResult),
+        .data1_i(RSdata),
+        .select_i(jr),
         .data_o(pc_in)
         );	
 
 MUX_2to1 #(.size(1)) Mux_ALU_ZERO(
         .data0_i(ALUzero),
         .data1_i(inverse_ALUzero),
-        .select_i(ALUzeroselect),
+        .select_i(ALUBranchZeroSelect),
         .data_o(ALUzeroresult)
         );	
 

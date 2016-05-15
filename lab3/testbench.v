@@ -18,7 +18,7 @@
 // Additional Comments: 
 //
 //////////////////////////////////////////////////////////////////////////////////
-`define CYCLE_TIME 50			
+`define CYCLE_TIME 2
 
 module TestBench;
   reg Clk, Start;
@@ -34,7 +34,7 @@ module TestBench;
     #(`CYCLE_TIME)
     
     Start = 1;
-    #(`CYCLE_TIME*560)	
+    #(`CYCLE_TIME*5600)	
     
   $finish;
   end
@@ -43,13 +43,15 @@ module TestBench;
     $display("========================================");
   	$display("PC = %d, Instr: %b, Next pc = %d", CPU.PC.pc_out_o, CPU.instr, CPU.pc_in);
     //$display("Jump = %b", CPU.mux_pc_jump_select);
-    //$display("Addi = %b", CPU.Decoder.addi);
-    //$display("OP: %b", CPU.Decoder.ALU_op_o);
+    $display("Addi = %b", CPU.Decoder.addi);
+    $display("OP: %b", CPU.Decoder.ALU_op_o);
     //$display("ImmSign: %b, ImmUnsi: %b, Imm: %b, Ext: %b", CPU.ImmSignExtensionResult, CPU.ImmUnsignExtensionResult, CPU.ImmExtensionResult, CPU.ExtensionResult);
-    $display("src1: %b, src2: %b, ALURESULT: %b", CPU.ALUsrc1, CPU.ALUsrc2, CPU.ALUresult);
-    $display("MemResult: %b RDWriteBackResult: %b RDWriteBackSelect = %b", CPU.MemResult, CPU.RDWriteBackResult, CPU.RDWriteBackResult);
-    $display("Decoder RDWriteBackSelect_o: %b", CPU.Decoder.RDWriteBackSelect_o);
-    $display("Decoder lw: %b %b", CPU.Decoder.lw, CPU.Decoder.MemRead_o);
+    $display("Jal: %b RDaddr: %b, RDdata: %b", CPU.jal, CPU.RDaddr, CPU.RDdata);
+
+    //$display("src1: %b, src2: %b, ALURESULT: %b", CPU.ALUsrc1, CPU.ALUsrc2, CPU.ALUresult);
+    //$display("MemResult: %b RDWriteBackResult: %b RDWriteBackSelect = %b", CPU.MemResult, CPU.RDWriteBackResult, CPU.RDWriteBackResult);
+    //$display("Decoder RDWriteBackSelect_o: %b", CPU.Decoder.RDWriteBackSelect_o);
+    //$display("Decoder lw: %b %b", CPU.Decoder.lw, CPU.Decoder.MemRead_o);
     $display("Data Memory = %d, %d, %d, %d, %d, %d, %d, %d",CPU.Data_Memory.memory[0], CPU.Data_Memory.memory[1], CPU.Data_Memory.memory[2], CPU.Data_Memory.memory[3], CPU.Data_Memory.memory[4], CPU.Data_Memory.memory[5], CPU.Data_Memory.memory[6], CPU.Data_Memory.memory[7]);
     $display("Data Memory = %d, %d, %d, %d, %d, %d, %d, %d",CPU.Data_Memory.memory[8], CPU.Data_Memory.memory[9], CPU.Data_Memory.memory[10], CPU.Data_Memory.memory[11], CPU.Data_Memory.memory[12], CPU.Data_Memory.memory[13], CPU.Data_Memory.memory[14], CPU.Data_Memory.memory[15]);
     $display("Data Memory = %d, %d, %d, %d, %d, %d, %d, %d",CPU.Data_Memory.memory[16], CPU.Data_Memory.memory[17], CPU.Data_Memory.memory[18], CPU.Data_Memory.memory[19], CPU.Data_Memory.memory[20], CPU.Data_Memory.memory[21], CPU.Data_Memory.memory[22], CPU.Data_Memory.memory[23]);
