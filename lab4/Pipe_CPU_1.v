@@ -145,6 +145,18 @@ wire [5-1:0] EX_RegDstResult;
 wire [32-1:0] EX_BranchShifterResult;
 wire [32-1:0] EX_pc_out;
 
+wire [5-1:0] EX_RSaddr;
+assign EX_RSaddr = EX_instr[25:21];
+wire [5-1:0] EX_RTaddr;
+assign EX_RTaddr = EX_instr[20:16];
+
+
+wire [2-1:0] EX_Src1_Forward;
+wire [2-1:0] EX_Src2_Forward;
+
+wire [32-1:0] EX_Real_RSdata;
+wire [32-1:0] EX_Real_RTdata;
+
 /**** EX/MEM ****/
 wire [32+6+2*32+1+5-1:0] EX_MEM_PIPE_i;
 wire [32+6+2*32+1+5-1:0] EX_MEM_PIPE_o;
@@ -344,16 +356,31 @@ MUX_2to1 #(.size(32)) Mux_Extension(
     .data_o(EX_ExtensionResult)
     );	
 
+MUX_3to1 #(.size(32)) Mux_Real_RS(
+    .data0_i(EX_RSdata),
+    .data1_i(MEM_ALUresult),
+    .data2_i(WB_RDdata),
+    .select_i(EX_Src1_Forward),
+    .data_o(EX_Real_RSdata)
+);
+MUX_3to1 #(.size(32)) Mux_Real_RT(
+    .data0_i(EX_RTdata),
+    .data1_i(MEM_ALUresult),
+    .data2_i(WB_RDdata),
+    .select_i(EX_Src2_Forward),
+    .data_o(EX_Real_RTdata)
+);
+
 
 MUX_2to1 #(.size(32)) Mux_ALUSrc1(
-    .data0_i(EX_RSdata),
-    .data1_i(EX_RTdata),
+    .data0_i(EX_Real_RSdata),
+    .data1_i(EX_Real_RTdata),
     .select_i(EX_ALUSrc1select),
     .data_o(EX_ALUsrc1)
     );	
 
 MUX_2to1 #(.size(32)) Mux_ALUSrc2(
-    .data0_i(EX_RTdata),
+    .data0_i(EX_Real_RTdata),
     .data1_i(EX_ExtensionResult),
     .select_i(EX_ALUSrc2select),
     .data_o(EX_ALUsrc2)
@@ -407,6 +434,17 @@ MUX_2to1 #(.size(32)) Mux1(
     .data_o(WB_RDdata)
     );
 
+// Forward
+Forward FW(
+    .WB_RegWrite_i(WB_RegWrite),
+    .WB_RegDst_i(WB_RegDstResult),
+    .MEM_RegWrite_i(MEM_RegWrite),
+    .MEM_RegDst_i(MEM_RegDstResult),
+    .EX_RSaddr_i(EX_RSaddr),
+    .EX_RTaddr_i(EX_RTaddr),
+    .EX_Src1_Forward_o(EX_Src1_Forward),
+    .EX_Src2_Forward_o(EX_Src2_Forward)
+    );
 
 
 endmodule
