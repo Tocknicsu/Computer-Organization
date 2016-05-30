@@ -32,11 +32,13 @@ assign IF_const_32d4 = 4;
 wire [32-1:0] IF_pc_out_plus_4;
 
 wire [32-1:0] IF_instr;
+wire IF_PC_Write;
 /**** IF/ID stage ****/
 wire [32 + 32 - 1 :0] IF_ID_PIPE_i;
 wire [32 + 32 - 1 :0] IF_ID_PIPE_o;
 
 assign IF_ID_PIPE_i = {IF_instr, IF_pc_out};
+wire IF_ID_FLUSH;
 wire IF_ID_PIPE_rst_i;
 assign IF_ID_PIPE_rst_i = rst_i;
 /**** ID stage ****/
@@ -65,6 +67,7 @@ wire ID_RDWriteBackSelect;
 /**** ID/EX ****/
 wire [32+32+1+3+10+32*5-1:0] ID_EX_PIPE_i;
 wire [32+32+1+3+10+32*5-1:0] ID_EX_PIPE_o;
+wire ID_EX_FLUSH;
 wire ID_EX_PIPE_rst_i;
 assign ID_EX_PIPE_rst_i = rst_i;
 
@@ -161,6 +164,7 @@ wire [32-1:0] EX_Real_RTdata;
 wire [32+6+2*32+1+5-1:0] EX_MEM_PIPE_i;
 wire [32+6+2*32+1+5-1:0] EX_MEM_PIPE_o;
 wire EX_MEM_PIPE_rst_i;
+wire EX_MEM_FLUSH;
 assign EX_MEM_PIPE_rst_i = rst_i;
 
 assign EX_MEM_PIPE_i = {
@@ -212,6 +216,8 @@ assign MEM_pc_select = MEM_Branch & (MEM_ALUBranchZeroSelect ^ MEM_ALUzero);
 wire [1*2 + 32*2 + 5-1:0] MEM_WB_PIPE_i;
 wire [1*2 + 32*2 + 5-1:0] MEM_WB_PIPE_o;
 wire MEM_WB_PIPE_rst_i;
+wire MEM_WB_FLUSH;
+assign MEM_WB_FLUSH = 0;
 assign MEM_WB_PIPE_rst_i = rst_i;
 
 assign MEM_WB_PIPE_i = {
@@ -253,6 +259,7 @@ MUX_2to1 #(.size(32)) Mux_PC(
 ProgramCounter PC(
     .clk_i(clk_i),
     .rst_i(rst_i),
+    .write_i(IF_PC_Write),
     .pc_in_i(IF_pc_in),
     .pc_out_o(IF_pc_out)
     );
@@ -271,6 +278,7 @@ Adder Add_pc(
 Pipe_Reg #(.size(32+32)) IF_ID(       //N is the total length of input/output
     .clk_i(clk_i),
     .rst_i(IF_ID_PIPE_rst_i),
+    .flush_i(IF_ID_FLUSH),
     .data_i(IF_ID_PIPE_i),
     .data_o(IF_ID_PIPE_o)
     );
@@ -323,6 +331,7 @@ Unsign_Extend #(.size(5)) ShamtUnsignExtension(
 Pipe_Reg #(.size(32+32+1+3+10+32*5)) ID_EX(
     .clk_i(clk_i),
     .rst_i(ID_EX_PIPE_rst_i),
+    .flush_i(ID_EX_FLUSH),
     .data_i(ID_EX_PIPE_i),
     .data_o(ID_EX_PIPE_o)
     );
@@ -407,6 +416,7 @@ Adder Adder2(
 Pipe_Reg #(.size(32+6+2*32+1+5)) EX_MEM(
     .clk_i(clk_i),
     .rst_i(EX_MEM_PIPE_rst_i),
+    .flush_i(EX_MEM_FLUSH),
     .data_i(EX_MEM_PIPE_i),
     .data_o(EX_MEM_PIPE_o)
     );
@@ -423,6 +433,7 @@ Data_Memory DM(
 Pipe_Reg #(.size(1*2 + 32*2 + 5)) MEM_WB(
     .clk_i(clk_i),
     .rst_i(MEM_WB_PIPE_rst_i),
+    .flush_i(MEM_WB_FLUSH),
     .data_i(MEM_WB_PIPE_i),
     .data_o(MEM_WB_PIPE_o)
     );
@@ -445,6 +456,18 @@ Forward FW(
     .EX_Src1_Forward_o(EX_Src1_Forward),
     .EX_Src2_Forward_o(EX_Src2_Forward)
     );
+//Hazard
+Hazard HD(
+    .EX_MemRead_i(EX_MemRead),
+    .EX_RTaddr_i(EX_RTaddr),
+    .ID_RSaddr_i(ID_instr[25:21]),
+    .ID_RTaddr_i(ID_instr[20:16]),
+    .MEM_pc_select_i(MEM_pc_select),
+    .IF_ID_FLUSH_o(IF_ID_FLUSH),
+    .ID_EX_FLUSH_o(ID_EX_FLUSH),
+    .EX_MEM_FLUSH_o(EX_MEM_FLUSH),
+    .IF_PC_Write_o(IF_PC_Write)
+);
 
 
 endmodule

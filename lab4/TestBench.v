@@ -38,14 +38,15 @@ initial  begin
 	count = 0;
     
     #(`CYCLE_TIME)		RST = 1;
-    #(`CYCLE_TIME*1000)	$stop;
+    #(`CYCLE_TIME*500)	$stop;
     //#(`CYCLE_TIME*20)	$fclose(handle); $stop;
 end
 
 //Print result to "CO_P4_Result.dat"
 always@(posedge CLK) begin
     count = count + 1;
-	if( count == 30 ) begin 
+    /*
+	if( count == 1000 ) begin 
 	//print result to transcript 
 	$display("Register===========================================================\n");
 	$display("r0=%d, r1=%d, r2=%d, r3=%d, r4=%d, r5=%d, r6=%d, r7=%d\n",
@@ -79,15 +80,14 @@ always@(posedge CLK) begin
 	//$display("\nPC=%d\n",cpu.PC.pc_i);
 	end
 	else ;
+    */
     
-        /*
-	if( count <= 10 ) begin 
+	if( count <= 200 ) begin 
         $display("Count: %d", count);
-        $display("%b %b %b", cpu.MEM_pc_out, cpu.MEM_pc_select, cpu.EX_MEM_PIPE_o);
-        $display("PC_IN: %d PC_OUT: %d", cpu.IF_pc_in, cpu.IF_pc_out);
-        $display("IF: %b", cpu.IF_instr);
-        $display("");
+        $display("IF instr: %b", cpu.IF_instr);
         $display("ID instr: %b pc: %d", cpu.ID_instr, cpu.ID_pc_in);
+        $display("EX instr: %b pc: %d", cpu.EX_instr, cpu.EX_pc_in);
+
         $display("Register===========================================================");
         $display("r0=%d, r1=%d, r2=%d, r3=%d, r4=%d, r5=%d, r6=%d, r7=%d",
         cpu.RF.Reg_File[0], cpu.RF.Reg_File[1], cpu.RF.Reg_File[2], cpu.RF.Reg_File[3], cpu.RF.Reg_File[4], 
@@ -105,11 +105,8 @@ always@(posedge CLK) begin
         cpu.RF.Reg_File[24], cpu.RF.Reg_File[25], cpu.RF.Reg_File[26], cpu.RF.Reg_File[27], cpu.RF.Reg_File[28], 
         cpu.RF.Reg_File[29], cpu.RF.Reg_File[30], cpu.RF.Reg_File[31],
         );
-        $display("");
-        $display("EX instr: %b pc: %d", cpu.EX_instr, cpu.EX_pc_in);
-        $display("");
         
-        $display("Memory===========================================================");
+        $display("\nMemory===========================================================");
         $display("m0=%d, m1=%d, m2=%d, m3=%d, m4=%d, m5=%d, m6=%d, m7=%d\nm8=%d, m9=%d, m10=%d, m11=%d, m12=%d, m13=%d, m14=%d, m15=%d\nr16=%d, m17=%d, m18=%d, m19=%d, m20=%d, m21=%d, m22=%d, m23=%d\nm24=%d, m25=%d, m26=%d, m27=%d, m28=%d, m29=%d, m30=%d, m31=%d",							 
         cpu.DM.memory[0], cpu.DM.memory[1], cpu.DM.memory[2], cpu.DM.memory[3],
         cpu.DM.memory[4], cpu.DM.memory[5], cpu.DM.memory[6], cpu.DM.memory[7],
@@ -120,8 +117,9 @@ always@(posedge CLK) begin
         cpu.DM.memory[24], cpu.DM.memory[25], cpu.DM.memory[26], cpu.DM.memory[27],
         cpu.DM.memory[28], cpu.DM.memory[29], cpu.DM.memory[30], cpu.DM.memory[31]
         );
+        $display("");
+        $display("");
    end
-        */
 end
   
 endmodule
