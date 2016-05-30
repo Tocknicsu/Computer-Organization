@@ -37,7 +37,7 @@ wire IF_PC_Write;
 wire [32 + 32 - 1 :0] IF_ID_PIPE_i;
 wire [32 + 32 - 1 :0] IF_ID_PIPE_o;
 
-assign IF_ID_PIPE_i = {IF_instr, IF_pc_out};
+assign IF_ID_PIPE_i = {IF_instr, IF_pc_out_plus_4};
 wire IF_ID_FLUSH;
 wire IF_ID_PIPE_rst_i;
 assign IF_ID_PIPE_rst_i = rst_i;

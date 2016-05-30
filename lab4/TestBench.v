@@ -38,7 +38,7 @@ initial  begin
 	count = 0;
     
     #(`CYCLE_TIME)		RST = 1;
-    #(`CYCLE_TIME*500)	$stop;
+    #(`CYCLE_TIME*1000)	$stop;
     //#(`CYCLE_TIME*20)	$fclose(handle); $stop;
 end
 
@@ -82,7 +82,7 @@ always@(posedge CLK) begin
 	else ;
     */
     
-	if( count <= 200 ) begin 
+	if( count <= 1000 ) begin 
         $display("Count: %d", count);
         $display("IF instr: %b", cpu.IF_instr);
         $display("ID instr: %b pc: %d", cpu.ID_instr, cpu.ID_pc_in);
